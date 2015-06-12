@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<script type="text/javascript" src="js/eventemitter2.min.js"></script>
+<script type="text/javascript" src="js/roslib.min.js"></script>
+<script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
+<!-- <script type="text/javascript" src="js/thumbstick.js"></script> -->
+<script type="text/javascript" src="js/virtualjoystick.js"></script>
+
+<script type="text/javascript" type="text/javascript">
+	var ros = new ROSLIB.Ros({
+		url : 'ws://192.168.0.1:9090'
+	});
+
+	ros.on('connection', function() {
+		console.log('Connected to websocket server.');
+	});
+
+	ros.on('error', function(error) {
+		console.log('Error connecting to websocket server: ', error);
+	});
+
+	ros.on('close', function() {
+		console.log('Connection to websocket server closed.');
+	});
+
+	//Connect to a topic
+	var cmdVel = new ROSLIB.Topic({
+		ros : ros,
+		name : '/mobile_base/commands/velocity',
+		messageType : 'geometry_msgs/Twist'
+	});
+
+	
+
+
+
+
+
+	
+
+	// // Subscribing to a Topic
+	// // ----------------------
+
+	// var listener = new ROSLIB.Topic({
+	//   ros : ros,
+	//   name : '/listener',
+	//   messageType : 'std_msgs/String'
+	// });
+
+	// listener.subscribe(function(message) {
+	//   console.log('Received message on ' + listener.name + ': ' + message.data);
+	//   listener.unsubscribe();
+	// });
+
+	// // Calling a service
+	// // -----------------
+
+	// var addTwoIntsClient = new ROSLIB.Service({
+	//   ros : ros,
+	//   name : '/add_two_ints',
+	//   serviceType : 'rospy_tutorials/AddTwoInts'
+	// });
+
+	// var request = new ROSLIB.ServiceRequest({
+	//   a : 1,
+	//   b : 2
+	// });
+
+	// addTwoIntsClient.callService(request, function(result) {
+	//   console.log('Result for service call on '
+	//     + addTwoIntsClient.name
+	//     + ': '
+	//     + result.sum);
+	// });
+
+	// // Getting and setting a param value
+	// // ---------------------------------
+
+	// ros.getParams(function(params) {
+	//   console.log(params);
+	// });
+
+	// var maxVelX = new ROSLIB.Param({
+	//   ros : ros,
+	//   name : 'max_vel_y'
+	// });
+
+	// maxVelX.set(0.8);
+	// maxVelX.get(function(value) {
+	//   console.log('MAX VAL: ' + value);
+	// });
+
+
+	function forward(speed){
+		var twist = new ROSLIB.Message({
+			linear : {
+				x : speed,
+				y : 0.0,
+				z : 0.0
+			},
+			angular : {
+				x : 0.0,
+				y : 0.0,
+				z : 0.0
+			}
+		});
+		cmdVel.publish(twist);
+	}
+	function turn(dir){
+		var twist = new ROSLIB.Message({
+			linear : {
+				x : 0.05,
+				y : 0.0,
+				z : 0.0
+			},
+			angular : {
+				x : dir,
+				y : dir,
+				z : dir
+			}
+		});
+		cmdVel.publish(twist);
+	}
+</script>
+<style>
+	button{
+		width: 70px;
+		height: 70px;
+	}
+
+	#stick{
+		width: 500px;
+		height: 500px;
+		border: solid 2px black;
+		background-color: #eee;
+	}
+
+</style>
+</head>
+
+<body>
+	<div id="stick"></div>
+	<div id="stickinfo"></div>
+	<script type="text/javascript">
+		$(document).ready(function() {
+
+			var joystick = new VirtualJoystick({
+				container: document.getElementById('stick'),
+				mouseSupport: true,
+				limitStickTravel: true,
+				stickRadius: 100,
+				strokeStyle: 'black'
+			});
+			joystick.addEventListener('touchStart', function(){
+				console.log('down')
+			})
+			joystick.addEventListener('touchEnd', function(){
+				console.log('up')
+			})
+			setInterval(function(){
+				var outputEl = document.getElementById('stickinfo');
+
+				var angle = Math.atan2(joystick.deltaY(), joystick.deltaX())*180.0/Math.PI+90;
+				if(angle>180)angle-=360;
+
+				var ampli = Math.sqrt(joystick.deltaY()*joystick.deltaY()+joystick.deltaX()*joystick.deltaX());
+
+				if(ampli>10){
+					outputEl.innerHTML = 
+						"angle="+angle+"<br/>"+
+						"ampli="+ampli;
+
+						var twist = new ROSLIB.Message({
+						linear : {
+							x : -joystick.deltaY()/200,
+							y : 0.0,
+							z : 0.0
+						},
+						angular : {
+							x : -angle/90,
+							y : -angle/90,
+							z : -angle/90
+						}
+					});
+					cmdVel.publish(twist);
+				}
+				else{
+					outputEl.innerHTML = 
+						"angle=n/a<br/>"+
+						"ampli=n/a";
+				}
+			}, 100);
+
+		});
+	</script>
+
+
+	<table>
+		<tr><td></td><td><button onmousedown="forward(0.2)">Forward</button></td><td></td></tr>
+		<tr><td><button onmousedown="turn(2)">Left</button></td><td></td><td><button  onmousedown="turn(-2)">Right</button></td></tr>
+		<tr><td></td><td><button onmousedown="forward(-0.2)">Backward</button></td><td></td></tr>
+	</table>
+</body>
+</html>
