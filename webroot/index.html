@@ -16,14 +16,23 @@
 
 	ros.on('connection', function() {
 		console.log('Connected to websocket server.');
+		var elmt = document.getElementById('status');
+		elmt.className = "connected";
+		elmt.innerHTML = "Connected";
 	});
 
 	ros.on('error', function(error) {
 		console.log('Error connecting to websocket server: ', error);
+		var elmt = document.getElementById('status');
+		elmt.className = "error";
+		elmt.innerHTML = "Error: "+error;
 	});
 
 	ros.on('close', function() {
 		console.log('Connection to websocket server closed.');
+		var elmt = document.getElementById('status');
+		elmt.className = "closed";
+		elmt.innerHTML = "Connection closed";
 	});
 
 	//Connect to a topic
@@ -109,6 +118,27 @@
 		top: 0;
 		left: 0;
 	}
+	
+	#status{
+		position:absolute;
+		left: 25vw;
+		width: 50vw;
+		height: 30px;
+		border: solid 2px black;
+		
+		color: #ffffff;
+		text-align: center;
+		line-height: 100%;
+	}
+	#status.closed{
+		background-color: #808080;
+	}
+	#status.connected{
+		background-color: #41d300;
+	}
+	#status.error{
+		background-color: #d90000;
+	}
 
 </style>
 </head>
@@ -116,6 +146,11 @@
 <body>
 	<div id="stick"></div>
 	<div id="main">
+		<div id="statusbar">
+			<div id="status" class="closed">
+				Not loaded... wait a bit
+			</div>
+		</div>
 		
 	</div>
 	<script type="text/javascript">
@@ -158,7 +193,6 @@
 				}, 100);
 			};
 			var joyEnd = function(){
-				/*console.log('end');*/
 				if(sender){
 					clearInterval(sender);
 					sender = null;
