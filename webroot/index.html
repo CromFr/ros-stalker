@@ -154,69 +154,79 @@
 		
 	</div>
 	<script type="text/javascript">
+		var sender = null;
+		var joystick = null;
+		var stickradius = 0;
+		
 		$(document).ready(function() {
-
-			var stickMaxAmpli = 200;
-			var sender = null;
-
-			var joystick = new VirtualJoystick({
+			joySetup();
+		});
+		window.addEventListener("resize", joySetup);
+		
+		function joySetup(){
+			joyEnd();
+			stickradius = Math.min($(document).width(), $(document).height())/2.5;
+			
+			if(joystick){
+				joystick.destroy();
+			}
+			joystick = new VirtualJoystick({
 				container: document.getElementById('stick'),
 				mouseSupport: true,
 				limitStickTravel: true,
-				stickRadius: stickMaxAmpli,
+				stickRadius: stickradius,
 				strokeStyle: 'black'
 			});
 			
-									  
-									  
-			var joyStart = function(){
-				sender = setInterval(function(){
-					var ampli = Math.sqrt(
-						 joystick.deltaX()*joystick.deltaX()
-						+joystick.deltaY()*joystick.deltaY());
+			joystick._container.addEventListener('touchstart', joyStart);
+			joystick._container.addEventListener('mousedown', joyStart);
+			joystick._container.addEventListener('touchEnd', joyEnd);
+			joystick._container.addEventListener('mouseup', joyEnd);
+		}
+				  
+		function joyStart(){
+			sender = setInterval(function(){
+				var ampli = Math.sqrt(
+					 joystick.deltaX()*joystick.deltaX()
+					+joystick.deltaY()*joystick.deltaY());
 
-					var linspeed = -joystick.deltaY()/(2*stickMaxAmpli);
-					var angspeed = -joystick.deltaX()/(stickMaxAmpli/2);
-					var twist = new ROSLIB.Message({
-						linear : {
-							x : linspeed,
-							y : 0.0,
-							z : 0.0
-						},
-						angular : {
-							x : angspeed,
-							y : angspeed,
-							z : angspeed
-						}
-					});
-					cmdVel.publish(twist);
-				}, 100);
-			};
-			var joyEnd = function(){
-				if(sender){
-					clearInterval(sender);
-					sender = null;
-				}
+				var linspeed = -joystick.deltaY()/(2*stickradius);
+				var angspeed = -joystick.deltaX()/(stickradius/2);
+				console.log("pub "+linspeed);
 				var twist = new ROSLIB.Message({
 					linear : {
-						x : 0.0,
+						x : linspeed,
 						y : 0.0,
 						z : 0.0
 					},
 					angular : {
 						x : 0.0,
 						y : 0.0,
-						z : 0.0
+						z : angspeed
 					}
 				});
 				cmdVel.publish(twist);
-			};
-			
-			joystick._container.addEventListener('touchstart', joyStart);
-			joystick._container.addEventListener('mousedown', joyStart);
-			joystick._container.addEventListener('touchEnd', joyEnd);
-			joystick._container.addEventListener('mouseup', joyEnd);
-		});
+			}, 100);
+		};
+		function joyEnd(){			
+			if(sender){
+				clearInterval(sender);
+				sender = null;
+			}
+			var twist = new ROSLIB.Message({
+				linear : {
+					x : 0.0,
+					y : 0.0,
+					z : 0.0
+				},
+				angular : {
+					x : 0.0,
+					y : 0.0,
+					z : 0.0
+				}
+			});
+			cmdVel.publish(twist);
+		};
 	</script>
 
 
