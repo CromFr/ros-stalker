@@ -8,96 +8,8 @@
 	<script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
 	<script type="text/javascript" src="js/virtualjoystick.js"></script>
 	<script type="text/javascript" src="js/jsmpg.js"></script>
+	<script type="text/javascript" src="js/stalker.js"></script>
 
-	<script type="text/javascript" type="text/javascript">
-		 var ros = new ROSLIB.Ros({
-			url : 'ws://192.168.0.1:9090'
-		 });
-
-		ros.on('connection', function() {
-			console.log('Connected to websocket server.');
-			var elmt = document.getElementById('status');
-			elmt.className = "connected";
-			elmt.innerHTML = "Connected";
-		});
-
-		ros.on('error', function(error) {
-			console.log('Error connecting to websocket server: ', error);
-			var elmt = document.getElementById('status');
-			elmt.className = "error";
-			elmt.innerHTML = "Error: "+error;
-		});
-
-		ros.on('close', function() {
-			console.log('Connection to websocket server closed.');
-			var elmt = document.getElementById('status');
-			elmt.className = "closed";
-			elmt.innerHTML = "Connection closed";
-		});
-
-		//Connect to a topic
-		var cmdVel = new ROSLIB.Topic({
-			ros : ros,
-			name : '/mobile_base/commands/velocity',
-			messageType : 'geometry_msgs/Twist'
-		});
-
-
-
-
-
-		// // Subscribing to a Topic
-		// // ----------------------
-
-		 var listener = new ROSLIB.Topic({
-		   ros : ros,
-		   name : '/camera/rgb/image_color',
-		   messageType : 'sensor_msgs/Image'
-		 });
-
-		 listener.subscribe(function(message) {
-		   console.log('Received message on ' + listener.name + ': ' + message.data);
-		   listener.unsubscribe();
-		 });
-
-		// // Calling a service
-		// // -----------------
-
-		// var addTwoIntsClient = new ROSLIB.Service({
-		//   ros : ros,
-		//   name : '/add_two_ints',
-		//   serviceType : 'rospy_tutorials/AddTwoInts'
-		// });
-
-		// var request = new ROSLIB.ServiceRequest({
-		//   a : 1,
-		//   b : 2
-		// });
-
-		// addTwoIntsClient.callService(request, function(result) {
-		//   console.log('Result for service call on '
-		//     + addTwoIntsClient.name
-		//     + ': '
-		//     + result.sum);
-		// });
-
-		// // Getting and setting a param value
-		// // ---------------------------------
-
-		// ros.getParams(function(params) {
-		//   console.log(params);
-		// });
-
-		// var maxVelX = new ROSLIB.Param({
-		//   ros : ros,
-		//   name : 'max_vel_y'
-		// });
-
-		// maxVelX.set(0.8);
-		// maxVelX.get(function(value) {
-		//   console.log('MAX VAL: ' + value);
-		// });
-	</script>
 	<style>
 		body{
 			padding: 0;
@@ -117,32 +29,35 @@
 			position: fixed;
 			top: 0;
 			left: 0;
+			pointer-events:none;
 		}
 
 		#status{
-			position:absolute;
-			left: 25vw;
-			width: 50vw;
-			height: 30px;
+			position: fixed;
+			left: 50%;
+			transform: translateX(-50%);
 			border: solid 2px black;
+			padding: 2px 10px;
 
 			color: #ffffff;
 			text-align: center;
-			line-height: 100%;
+			font-size: 150%;
+			
 		}
 		#status.closed{
 			background-color: #808080;
 		}
 		#status.connected{
 			background-color: #41d300;
+			opacity: 0.1;
 		}
 		#status.error{
-			background-color: #d90000;
+			background-color: #d10000;
 		}
 		#stream{
 			background-color: rgba(0,0,0,0.3);
-			max-width: 100vw;
-			max-height: 50vh;
+			width: 100vw;
+			max-height: 60vh;
 		}
 
 	</style>
@@ -159,89 +74,6 @@
 		<canvas id="stream">
 			Please use a browser that supports the Canvas Element
 		</canvas>
-		
 	</div>
-	<script type="text/javascript">
-		var sender = null;
-		var joystick = null;
-		var stickradius = 0;
-		
-		$(document).ready(function() {
-			joySetup();
-			
-			//Start Video streaming
-			var player = new jsmpeg(
-				new WebSocket("ws://192.168.0.1:8084/"), 
-				{canvas:document.getElementById('stream')}
-			);
-		});
-		window.addEventListener("resize", joySetup);
-		
-		function joySetup(){
-			joyEnd();
-			stickradius = Math.min($(document).width(), $(document).height())/2.5;
-			
-			if(joystick){
-				joystick.destroy();
-			}
-			joystick = new VirtualJoystick({
-				container: document.getElementById('stick'),
-				mouseSupport: true,
-				limitStickTravel: true,
-				stickRadius: stickradius,
-				strokeStyle: 'black'
-			});
-			
-			joystick._container.addEventListener('touchstart', joyStart);
-			joystick._container.addEventListener('mousedown', joyStart);
-			joystick._container.addEventListener('touchEnd', joyEnd);
-			joystick._container.addEventListener('mouseup', joyEnd);
-		}
-				  
-		function joyStart(){
-			sender = setInterval(function(){
-				var ampli = Math.sqrt(
-					 joystick.deltaX()*joystick.deltaX()
-					+joystick.deltaY()*joystick.deltaY());
-
-				var linspeed = -joystick.deltaY()/(2*stickradius);
-				var angspeed = -joystick.deltaX()/(stickradius/2);
-				var twist = new ROSLIB.Message({
-					linear : {
-						x : linspeed,
-						y : 0.0,
-						z : 0.0
-					},
-					angular : {
-						x : 0.0,
-						y : 0.0,
-						z : angspeed
-					}
-				});
-				cmdVel.publish(twist);
-			}, 100);
-		};
-		function joyEnd(){			
-			if(sender){
-				clearInterval(sender);
-				sender = null;
-			}
-			var twist = new ROSLIB.Message({
-				linear : {
-					x : 0.0,
-					y : 0.0,
-					z : 0.0
-				},
-				angular : {
-					x : 0.0,
-					y : 0.0,
-					z : 0.0
-				}
-			});
-			cmdVel.publish(twist);
-		};
-	</script>
-
-
 </body>
 </html>
