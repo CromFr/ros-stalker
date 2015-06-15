@@ -1,156 +1,163 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8" />
+	<meta charset="utf-8" />
 
-<script type="text/javascript" src="js/eventemitter2.min.js"></script>
-<script type="text/javascript" src="js/roslib.min.js"></script>
-<script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
-<!-- <script type="text/javascript" src="js/thumbstick.js"></script> -->
-<script type="text/javascript" src="js/virtualjoystick.js"></script>
+	<script type="text/javascript" src="js/eventemitter2.min.js"></script>
+	<script type="text/javascript" src="js/roslib.min.js"></script>
+	<script type="text/javascript" src="js/jquery-1.11.3.min.js"></script>
+	<script type="text/javascript" src="js/virtualjoystick.js"></script>
+	<script type="text/javascript" src="js/jsmpg.js"></script>
 
-<script type="text/javascript" type="text/javascript">
-	 var ros = new ROSLIB.Ros({
-	 	url : 'ws://192.168.0.1:9090'
-	 });
+	<script type="text/javascript" type="text/javascript">
+		 var ros = new ROSLIB.Ros({
+			url : 'ws://192.168.0.1:9090'
+		 });
 
-	ros.on('connection', function() {
-		console.log('Connected to websocket server.');
-		var elmt = document.getElementById('status');
-		elmt.className = "connected";
-		elmt.innerHTML = "Connected";
-	});
+		ros.on('connection', function() {
+			console.log('Connected to websocket server.');
+			var elmt = document.getElementById('status');
+			elmt.className = "connected";
+			elmt.innerHTML = "Connected";
+		});
 
-	ros.on('error', function(error) {
-		console.log('Error connecting to websocket server: ', error);
-		var elmt = document.getElementById('status');
-		elmt.className = "error";
-		elmt.innerHTML = "Error: "+error;
-	});
+		ros.on('error', function(error) {
+			console.log('Error connecting to websocket server: ', error);
+			var elmt = document.getElementById('status');
+			elmt.className = "error";
+			elmt.innerHTML = "Error: "+error;
+		});
 
-	ros.on('close', function() {
-		console.log('Connection to websocket server closed.');
-		var elmt = document.getElementById('status');
-		elmt.className = "closed";
-		elmt.innerHTML = "Connection closed";
-	});
+		ros.on('close', function() {
+			console.log('Connection to websocket server closed.');
+			var elmt = document.getElementById('status');
+			elmt.className = "closed";
+			elmt.innerHTML = "Connection closed";
+		});
 
-	//Connect to a topic
-	var cmdVel = new ROSLIB.Topic({
-		ros : ros,
-		name : '/mobile_base/commands/velocity',
-		messageType : 'geometry_msgs/Twist'
-	});
+		//Connect to a topic
+		var cmdVel = new ROSLIB.Topic({
+			ros : ros,
+			name : '/mobile_base/commands/velocity',
+			messageType : 'geometry_msgs/Twist'
+		});
 
 
 
-	
 
-	// // Subscribing to a Topic
-	// // ----------------------
 
-	// var listener = new ROSLIB.Topic({
-	//   ros : ros,
-	//   name : '/listener',
-	//   messageType : 'std_msgs/String'
-	// });
+		// // Subscribing to a Topic
+		// // ----------------------
 
-	// listener.subscribe(function(message) {
-	//   console.log('Received message on ' + listener.name + ': ' + message.data);
-	//   listener.unsubscribe();
-	// });
+		 var listener = new ROSLIB.Topic({
+		   ros : ros,
+		   name : '/camera/rgb/image_color',
+		   messageType : 'sensor_msgs/Image'
+		 });
 
-	// // Calling a service
-	// // -----------------
+		 listener.subscribe(function(message) {
+		   console.log('Received message on ' + listener.name + ': ' + message.data);
+		   listener.unsubscribe();
+		 });
 
-	// var addTwoIntsClient = new ROSLIB.Service({
-	//   ros : ros,
-	//   name : '/add_two_ints',
-	//   serviceType : 'rospy_tutorials/AddTwoInts'
-	// });
+		// // Calling a service
+		// // -----------------
 
-	// var request = new ROSLIB.ServiceRequest({
-	//   a : 1,
-	//   b : 2
-	// });
+		// var addTwoIntsClient = new ROSLIB.Service({
+		//   ros : ros,
+		//   name : '/add_two_ints',
+		//   serviceType : 'rospy_tutorials/AddTwoInts'
+		// });
 
-	// addTwoIntsClient.callService(request, function(result) {
-	//   console.log('Result for service call on '
-	//     + addTwoIntsClient.name
-	//     + ': '
-	//     + result.sum);
-	// });
+		// var request = new ROSLIB.ServiceRequest({
+		//   a : 1,
+		//   b : 2
+		// });
 
-	// // Getting and setting a param value
-	// // ---------------------------------
+		// addTwoIntsClient.callService(request, function(result) {
+		//   console.log('Result for service call on '
+		//     + addTwoIntsClient.name
+		//     + ': '
+		//     + result.sum);
+		// });
 
-	// ros.getParams(function(params) {
-	//   console.log(params);
-	// });
+		// // Getting and setting a param value
+		// // ---------------------------------
 
-	// var maxVelX = new ROSLIB.Param({
-	//   ros : ros,
-	//   name : 'max_vel_y'
-	// });
+		// ros.getParams(function(params) {
+		//   console.log(params);
+		// });
 
-	// maxVelX.set(0.8);
-	// maxVelX.get(function(value) {
-	//   console.log('MAX VAL: ' + value);
-	// });
-</script>
-<style>
-	body{
-		padding: 0;
-		margin: 0;
-	}
-	button{
-		width: 70px;
-		height: 70px;
-	}
+		// var maxVelX = new ROSLIB.Param({
+		//   ros : ros,
+		//   name : 'max_vel_y'
+		// });
 
-	#stick{
-		width: 100vw;
-		height: 100vh;
-		background-color: #cfc;
-	}
-	#main{
-		position: fixed;
-		top: 0;
-		left: 0;
-	}
-	
-	#status{
-		position:absolute;
-		left: 25vw;
-		width: 50vw;
-		height: 30px;
-		border: solid 2px black;
-		
-		color: #ffffff;
-		text-align: center;
-		line-height: 100%;
-	}
-	#status.closed{
-		background-color: #808080;
-	}
-	#status.connected{
-		background-color: #41d300;
-	}
-	#status.error{
-		background-color: #d90000;
-	}
+		// maxVelX.set(0.8);
+		// maxVelX.get(function(value) {
+		//   console.log('MAX VAL: ' + value);
+		// });
+	</script>
+	<style>
+		body{
+			padding: 0;
+			margin: 0;
+		}
+		button{
+			width: 70px;
+			height: 70px;
+		}
 
-</style>
+		#stick{
+			width: 100vw;
+			height: 100vh;
+			background-color: #cfc;
+		}
+		#main{
+			position: fixed;
+			top: 0;
+			left: 0;
+		}
+
+		#status{
+			position:absolute;
+			left: 25vw;
+			width: 50vw;
+			height: 30px;
+			border: solid 2px black;
+
+			color: #ffffff;
+			text-align: center;
+			line-height: 100%;
+		}
+		#status.closed{
+			background-color: #808080;
+		}
+		#status.connected{
+			background-color: #41d300;
+		}
+		#status.error{
+			background-color: #d90000;
+		}
+		#stream{
+			background-color: rgba(0,0,0,0.3);
+			max-height: 50vh;
+		}
+
+	</style>
 </head>
 
 <body>
-	<div id="stick"></div>
+	<!--<div id="stick"></div>-->
 	<div id="main">
 		<div id="statusbar">
 			<div id="status" class="closed">
 				Not loaded... wait a bit
 			</div>
 		</div>
+		<canvas id="stream">
+			Please use a browser that supports the Canvas Element
+		</canvas>
 		
 	</div>
 	<script type="text/javascript">
@@ -160,6 +167,12 @@
 		
 		$(document).ready(function() {
 			joySetup();
+			
+			//Start Video streaming
+			var player = new jsmpeg(
+				new WebSocket("ws://192.168.0.1:8084/"), 
+				{canvas:document.getElementById('stream')}
+			);
 		});
 		window.addEventListener("resize", joySetup);
 		
@@ -192,7 +205,6 @@
 
 				var linspeed = -joystick.deltaY()/(2*stickradius);
 				var angspeed = -joystick.deltaX()/(stickradius/2);
-				console.log("pub "+linspeed);
 				var twist = new ROSLIB.Message({
 					linear : {
 						x : linspeed,
