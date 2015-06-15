@@ -4,8 +4,8 @@ var SOCKET_STREAM = 'ws://'+IP_TURTLEBOT+':8084/';
 
 var ACCEL_MAX_LIN = 3.0;
 var ACCEL_MAX_ANG = 10.0;
-var SPEED_MAX_LIN = 1.0;
-var SPEED_MAX_ANG = 2.0;
+var SPEED_MAX_LIN = 1.5;
+var SPEED_MAX_ANG = 3.0;
 
 var ROS_POLL_PERIOD = 0.05;//period in seconds
 
@@ -48,6 +48,8 @@ window.addEventListener("resize", joySetup);
 
 
 
+//===================================================================================
+// ROS functions
 
 function rosConnect(){
 
@@ -134,20 +136,17 @@ function joyStart(){
 		sender = null;
 	}
 	
-	sender = setInterval(function(){
-		velocity_lin += -joystick.deltaY()/stickradius * ACCEL_MAX_LIN * ROS_POLL_PERIOD;
-		velocity_ang += -joystick.deltaX()/stickradius * ACCEL_MAX_ANG * ROS_POLL_PERIOD;
-		
-		if(Math.abs(velocity_lin)>SPEED_MAX_LIN){
-			var linSign = velocity_lin>=0? 1 : -1;
-			velocity_lin = linSign*SPEED_MAX_LIN;
-		}
-		if(Math.abs(velocity_ang)>SPEED_MAX_ANG){
-			var angSign = velocity_ang>=0? 1 : -1;
-			velocity_ang = angSign*SPEED_MAX_ANG;
-		}
-
-		
+	sender = setInterval(function(){		
+		velocity_lin = stepToward(
+			velocity_lin, 
+			ACCEL_MAX_LIN*ROS_POLL_PERIOD, 
+			(-joystick.deltaY()/stickradius) * SPEED_MAX_LIN
+		);
+		velocity_ang = stepToward(
+			velocity_ang, 
+			ACCEL_MAX_ANG*ROS_POLL_PERIOD,
+			(-joystick.deltaX()/stickradius) * SPEED_MAX_ANG
+		);
 		
 		rosUpdateVelocity();
 	}, 1000*ROS_POLL_PERIOD);
@@ -159,23 +158,17 @@ function joyEnd(){
 		sender = null;
 	}
 	
-	sender = setInterval(function(){
-		var deltaLin = ACCEL_MAX_LIN * ROS_POLL_PERIOD;
-		var deltaAng = ACCEL_MAX_ANG * ROS_POLL_PERIOD;
-
-		if(Math.abs(velocity_lin)-deltaLin>0){
-			var linSign = velocity_lin>=0? 1 : -1;
-			velocity_lin = linSign * (Math.abs(velocity_lin) - deltaLin);
-		}
-		else
-			velocity_lin = 0;
-
-		if(Math.abs(velocity_ang)-deltaAng>0){
-			var angSign = velocity_ang>=0? 1 : -1;
-			velocity_ang = angSign * (Math.abs(velocity_ang) - deltaAng);
-		}
-		else
-			velocity_ang = 0;
+	sender = setInterval(function(){		
+		velocity_lin = stepToward(
+			velocity_lin,
+			ACCEL_MAX_LIN*ROS_POLL_PERIOD,
+			0
+		);
+		velocity_ang = stepToward(
+			velocity_ang,
+			ACCEL_MAX_ANG*ROS_POLL_PERIOD,
+			0
+		);
 
 		rosUpdateVelocity();
 		
@@ -186,3 +179,22 @@ function joyEnd(){
 	}, 1000*ROS_POLL_PERIOD);
 	
 };
+
+
+//===================================================================================
+// Utility functions
+
+function stepToward(value, step, destination){
+	
+	var distance = destination - value;
+	
+	if(Math.abs(distance)>step){
+		var distanceSign = distance>=0? 1 : -1;
+		return value + distanceSign * step;
+	}
+	else{
+		return destination;
+	}
+	
+	
+}
