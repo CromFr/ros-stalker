@@ -2,6 +2,13 @@ var IP_TURTLEBOT = '192.168.0.1';
 var SOCKET_ROS = 'ws://'+IP_TURTLEBOT+':9090';
 var SOCKET_STREAM = 'ws://'+IP_TURTLEBOT+':8084/';
 
+var ACCEL_MAX_LIN = 3.0;
+var ACCEL_MAX_ANG = 10.0;
+var SPEED_MAX_LIN = 1.0;
+var SPEED_MAX_ANG = 2.0;
+
+var ROS_POLL_PERIOD = 0.05;//period in seconds
+
 
 
 
@@ -13,6 +20,8 @@ var sender = null;
 var joystick = null;
 var stickradius = 0;
 var ros_velocity = null;
+var velocity_lin = 0.0;
+var velocity_ang = 0.0;
 
 $(document).ready(function() {
 	rosConnect();
@@ -75,6 +84,24 @@ function rosConnect(){
 	});
 }
 
+
+function rosUpdateVelocity(){
+	var twist = new ROSLIB.Message({
+		linear : {
+			x : velocity_lin,
+			y : 0.0,
+			z : 0.0
+		},
+		angular : {
+			x : 0.0,
+			y : 0.0,
+			z : velocity_ang
+		}
+	});
+	ros_velocity.publish(twist);
+	
+}
+
 //===================================================================================
 // Joystick functions
 
@@ -102,45 +129,60 @@ function joySetup(){
 }
 
 function joyStart(){
-	sender = setInterval(function(){
-		var ampli = Math.sqrt(
-			 joystick.deltaX()*joystick.deltaX()
-			+joystick.deltaY()*joystick.deltaY());
-
-		var linspeed = -joystick.deltaY()/(2*stickradius);
-		var angspeed = -joystick.deltaX()/(stickradius/2);
-		var twist = new ROSLIB.Message({
-			linear : {
-				x : linspeed,
-				y : 0.0,
-				z : 0.0
-			},
-			angular : {
-				x : 0.0,
-				y : 0.0,
-				z : angspeed
-			}
-		});
-		ros_velocity.publish(twist);
-	}, 100);
-};
-
-function joyEnd(){			
 	if(sender){
 		clearInterval(sender);
 		sender = null;
 	}
-	var twist = new ROSLIB.Message({
-		linear : {
-			x : 0.0,
-			y : 0.0,
-			z : 0.0
-		},
-		angular : {
-			x : 0.0,
-			y : 0.0,
-			z : 0.0
+	
+	sender = setInterval(function(){
+		velocity_lin += -joystick.deltaY()/stickradius * ACCEL_MAX_LIN * ROS_POLL_PERIOD;
+		velocity_ang += -joystick.deltaX()/stickradius * ACCEL_MAX_ANG * ROS_POLL_PERIOD;
+		
+		if(Math.abs(velocity_lin)>SPEED_MAX_LIN){
+			var linSign = velocity_lin>=0? 1 : -1;
+			velocity_lin = linSign*SPEED_MAX_LIN;
 		}
-	});
-	ros_velocity.publish(twist);
+		if(Math.abs(velocity_ang)>SPEED_MAX_ANG){
+			var angSign = velocity_ang>=0? 1 : -1;
+			velocity_ang = angSign*SPEED_MAX_ANG;
+		}
+
+		
+		
+		rosUpdateVelocity();
+	}, 1000*ROS_POLL_PERIOD);
+};
+
+function joyEnd(){
+	if(sender){
+		clearInterval(sender);
+		sender = null;
+	}
+	
+	sender = setInterval(function(){
+		var deltaLin = ACCEL_MAX_LIN * ROS_POLL_PERIOD;
+		var deltaAng = ACCEL_MAX_ANG * ROS_POLL_PERIOD;
+
+		if(Math.abs(velocity_lin)-deltaLin>0){
+			var linSign = velocity_lin>=0? 1 : -1;
+			velocity_lin = linSign * (Math.abs(velocity_lin) - deltaLin);
+		}
+		else
+			velocity_lin = 0;
+
+		if(Math.abs(velocity_ang)-deltaAng>0){
+			var angSign = velocity_ang>=0? 1 : -1;
+			velocity_ang = angSign * (Math.abs(velocity_ang) - deltaAng);
+		}
+		else
+			velocity_ang = 0;
+
+		rosUpdateVelocity();
+		
+		if(velocity_lin==0 && velocity_ang==0){
+			clearInterval(sender);
+			sender = null;
+		}
+	}, 1000*ROS_POLL_PERIOD);
+	
 };
