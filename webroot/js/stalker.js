@@ -4,7 +4,7 @@ var SOCKET_STREAM = 'ws://'+IP_TURTLEBOT+':8084/';
 
 var ACCEL_MAX_LIN = 3.0;
 var ACCEL_MAX_ANG = 10.0;
-var SPEED_MAX_LIN = 1.5;
+var SPEED_MAX_LIN = 0.9;
 var SPEED_MAX_ANG = 3.0;
 
 var ROS_POLL_PERIOD = 0.05;//period in seconds
