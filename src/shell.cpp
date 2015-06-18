@@ -12,6 +12,7 @@ void rcv(const std_msgs::String::ConstPtr& msg)
 
 int main(int argc, char **argv)
 {
+  ROS_INFO("Starting shell node");
   ros::init(argc, argv, "shell");
 
   ros::NodeHandle n;
