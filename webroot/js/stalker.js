@@ -2,10 +2,18 @@ var IP_TURTLEBOT = '192.168.0.1';
 var SOCKET_ROS = 'ws://'+IP_TURTLEBOT+':9090';
 var SOCKET_STREAM = 'ws://'+IP_TURTLEBOT+':8084/';
 
-var ACCEL_MAX_LIN = 3.0;
-var ACCEL_MAX_ANG = 10.0;
-var SPEED_MAX_LIN = 0.9;
-var SPEED_MAX_ANG = 2.0;
+var MOVE_ACCEL_LIN = 3.0;
+var MOVE_ACCEL_ANG = 10.0;
+var MOVE_SPEED_MAX_LIN = 0.9;
+var MOVE_SPEED_MAX_ANG = 2.0;
+
+var CAM_SPEED_YAW = 60;
+var CAM_SPEED_PITCH = 40;
+var CAM_POS_MIN_YAW = -170;
+var CAM_POS_MAX_YAW = 170;
+var CAM_POS_MIN_PITCH = -45;
+var CAM_POS_MAX_PITCH = 90;
+
 
 var ROS_POLL_PERIOD = 0.05;//period in seconds
 
@@ -16,18 +24,29 @@ var ROS_POLL_PERIOD = 0.05;//period in seconds
 
 
 var ros = null;
-var sender = null;
-var joystick = null;
-var stickradius = 0;
 var ros_velocity = null;
 var ros_speak = null;
+var ros_camctrl = null;
+
+var joyMove = null;
+var joyMoveSender = null;
+var joyMoveRadius = 0;
+
+var joyCam = null;
+var joyCamSender = null;
+var joyCamRadius = 0;
+
+
 var velocity_lin = 0.0;
 var velocity_ang = 0.0;
+var cam_yaw = 0.0;
+var cam_pitch = 0.0;
 
 $(document).ready(function() {
 	rosConnect();
 
-	joySetup();
+	joyMoveSetup();
+	joyCamSetup();
 
 	//Start Video streaming
 	var player = new jsmpeg(
@@ -35,14 +54,17 @@ $(document).ready(function() {
 		{canvas:document.getElementById('stream')}
 	);
 });
-window.addEventListener("resize", joySetup);
+window.addEventListener("resize", joyMoveSetup);
+window.addEventListener("resize", joyCamSetup);
 
 
 
 
 
 
-
+setInterval(function(){		
+	console.log("cam="+cam_yaw+":"+cam_pitch);
+}, 200);
 
 
 
@@ -85,9 +107,11 @@ function rosConnect(){
 		name : '/mobile_base/commands/velocity',
 		messageType : 'geometry_msgs/Twist'
 	});
-	
-
-	//Connect to a topic
+	ros_camctrl = new ROSLIB.Topic({
+		ros : ros,
+		name : '/camctrl_topic',
+		messageType : 'std_msgs/String'
+	});
 	ros_speak = new ROSLIB.Topic({
 		ros : ros,
 		name : '/speak_topic',
@@ -110,7 +134,13 @@ function rosUpdateVelocity(){
 		}
 	});
 	ros_velocity.publish(twist);
-	
+}
+function rosUpdateCamPos(){
+	var pos = new ROSLIB.Message({
+		yaw: cam_yaw ,
+		pitch: cam_pitch
+	});
+	ros_camctrl.publish(pos);
 }
 
 function speak(text){
@@ -127,81 +157,135 @@ function onSpeakSubmit(){
 }
 
 //===================================================================================
-// Joystick functions
+// Move joystick functions
 
-function joySetup(){
-	joyEnd();
-	stickradius = Math.min($(document).width(), $(document).height())/3;
+function joyMoveSetup(){
+	joyMoveEnd();
+	joyMoveRadius = Math.min($(document).width(), $(document).height()/2)/3;
 
-	if(joystick){
-		joystick.destroy();
+	if(joyMove){
+		joyMove.destroy();
 	}
 	
-	stick.style += "z-index: 1000;"
-	joystick = new VirtualJoystick({
+	stick.style += "z-index: 1000;";//TODO
+	joyMove = new VirtualJoystick({
 		container: document.getElementById('stick'),
 		mouseSupport: true,
 		limitStickTravel: true,
-		stickRadius: stickradius,
+		joyMoveRadius: joyMoveRadius,
 		strokeStyle: 'black'
 	});
 
-	joystick._container.addEventListener('touchstart', joyStart);
-	joystick._container.addEventListener('mousedown', joyStart);
-	joystick._container.addEventListener('touchEnd', joyEnd);
-	joystick._container.addEventListener('mouseup', joyEnd);
+	joyMove._container.addEventListener('touchstart', joyMoveStart);
+	joyMove._container.addEventListener('mousedown', joyMoveStart);
+	joyMove._container.addEventListener('touchEnd', joyMoveEnd);
+	joyMove._container.addEventListener('mouseup', joyMoveEnd);
 }
 
-function joyStart(){
-	if(sender){
-		clearInterval(sender);
-		sender = null;
+function joyMoveStart(){
+	if(joyMoveSender){
+		clearInterval(joyMoveSender);
+		joyMoveSender = null;
 	}
 	
-	sender = setInterval(function(){		
+	joyMoveSender = setInterval(function(){		
 		velocity_lin = stepToward(
 			velocity_lin, 
-			ACCEL_MAX_LIN*ROS_POLL_PERIOD, 
-			(-joystick.deltaY()/stickradius) * SPEED_MAX_LIN
+			MOVE_ACCEL_LIN*ROS_POLL_PERIOD, 
+			(-joyMove.deltaY()/joyMoveRadius) * MOVE_SPEED_MAX_LIN
 		);
 		velocity_ang = stepToward(
 			velocity_ang, 
-			ACCEL_MAX_ANG*ROS_POLL_PERIOD,
-			(-joystick.deltaX()/stickradius) * SPEED_MAX_ANG
+			MOVE_ACCEL_ANG*ROS_POLL_PERIOD,
+			(-joyMove.deltaX()/joyMoveRadius) * MOVE_SPEED_MAX_ANG
 		);
 		
 		rosUpdateVelocity();
 	}, 1000*ROS_POLL_PERIOD);
 };
 
-function joyEnd(){
-	if(sender){
-		clearInterval(sender);
-		sender = null;
+function joyMoveEnd(){
+	if(joyMoveSender){
+		clearInterval(joyMoveSender);
+		joyMoveSender = null;
 	}
 	
-	sender = setInterval(function(){		
+	joyMoveSender = setInterval(function(){		
 		velocity_lin = stepToward(
 			velocity_lin,
-			ACCEL_MAX_LIN*ROS_POLL_PERIOD,
+			MOVE_ACCEL_LIN*ROS_POLL_PERIOD,
 			0
 		);
 		velocity_ang = stepToward(
 			velocity_ang,
-			ACCEL_MAX_ANG*ROS_POLL_PERIOD,
+			MOVE_ACCEL_ANG*ROS_POLL_PERIOD,
 			0
 		);
 
 		rosUpdateVelocity();
 		
 		if(velocity_lin==0 && velocity_ang==0){
-			clearInterval(sender);
-			sender = null;
+			clearInterval(joyMoveSender);
+			joyMoveSender = null;
 		}
 	}, 1000*ROS_POLL_PERIOD);
 	
 };
 
+//===================================================================================
+// Cam joystick functions
+
+function joyCamSetup(){
+	joyCamEnd();
+	joyCamRadius = Math.min($(document).width(), $(document).height()/2)/3;
+
+	if(joyCam){
+		joyCam.destroy();
+	}
+	
+	stick.style += "z-index: 1000;";//TODO
+	joyCam = new VirtualJoystick({
+		container: document.getElementById('stickcam'),
+		mouseSupport: true,
+		limitStickTravel: true,
+		joyMoveRadius: joyCamRadius,
+		strokeStyle: 'blue'
+	});
+
+	joyCam._container.addEventListener('touchstart', joyCamStart);
+	joyCam._container.addEventListener('mousedown', joyCamStart);
+	joyCam._container.addEventListener('touchEnd', joyCamEnd);
+	joyCam._container.addEventListener('mouseup', joyCamEnd);
+}
+
+function joyCamStart(){
+	if(joyCamSender){
+		clearInterval(joyCamSender);
+		joyCamSender = null;
+	}
+	
+	joyCamSender = setInterval(function(){
+		cam_pitch = stepToward(
+			cam_pitch, 
+			(-joyCam.deltaY()/joyCamRadius)*CAM_SPEED_PITCH*ROS_POLL_PERIOD, 
+			-joyCam.deltaY() >=0? CAM_POS_MAX_PITCH : CAM_POS_MIN_PITCH
+		);
+		cam_yaw = stepToward(
+			cam_yaw, 
+			(-joyCam.deltaX()/joyCamRadius)*CAM_SPEED_YAW*ROS_POLL_PERIOD, 
+			-joyCam.deltaX() >=0? CAM_POS_MAX_YAW : CAM_POS_MIN_YAW
+		);
+		
+		rosUpdateCamPos();
+	}, 1000*ROS_POLL_PERIOD);
+};
+
+function joyCamEnd(){
+	if(joyCamSender){
+		clearInterval(joyCamSender);
+		joyCamSender = null;
+	}
+};
 
 
 //===================================================================================
@@ -210,6 +294,7 @@ function joyEnd(){
 function stepToward(value, step, destination){
 	
 	var distance = destination - value;
+	step = Math.abs(step);
 	
 	if(Math.abs(distance)>step){
 		var distanceSign = distance>=0? 1 : -1;

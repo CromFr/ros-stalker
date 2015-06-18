@@ -21,15 +21,29 @@
 		}
 
 		#stick{
+			position: absolute;
 			width: 100vw;
-			height: 100vh;
+			height: 40vh;
 			background-color: #cfc;
+		}
+		#stickcam{
+			position: absolute;
+			width: 100vw;
+			height: 60vh;
+			background-color: #ccf;
 		}
 		#main{
 			position: fixed;
 			top: 0;
 			left: 0;
+			width: 100%;
 			pointer-events:none;
+		}
+		#stream{
+			background-color: rgba(0,0,0,0.1);
+			width: 100vw;
+			height: 60vh;
+			pointer-events: none;
 		}
 
 		#status{
@@ -42,7 +56,6 @@
 			color: #ffffff;
 			text-align: center;
 			font-size: 150%;
-			
 		}
 		#status.closed{
 			background-color: #808080;
@@ -54,31 +67,71 @@
 		#status.error{
 			background-color: #d10000;
 		}
-		#stream{
-			background-color: rgba(0,0,0,0.3);
-			width: 100vw;
-			max-height: 60vh;
+		
+		#speak-bar {
+			display: -ms-flexbox;
+			display: -webkit-flex;
+			display: flex;
+			-webkit-flex-direction: row;
+			-ms-flex-direction: row;
+			flex-direction: row;
+			-webkit-flex-wrap: nowrap;
+			-ms-flex-wrap: nowrap;
+			flex-wrap: nowrap;
+			-webkit-justify-content: flex-start;
+			-ms-flex-pack: start;
+			justify-content: flex-start;
+			-webkit-align-content: stretch;
+			-ms-flex-line-pack: stretch;
+			align-content: stretch;
+			-webkit-align-items: flex-start;
+			-ms-flex-align: start;
+			align-items: flex-start;
 		}
-		#footer{
-			position: fixed;
-			bottom: 0;
-			width: 100vw;
+
+		#speak-bar>*:nth-child(1) {
+			-webkit-order: 0;
+			-ms-flex-order: 0;
+			order: 0;
+			-webkit-flex: 1 1 auto;
+			-ms-flex: 1 1 auto;
+			flex: 1 1 auto;
+			-webkit-align-self: auto;
+			-ms-flex-item-align: auto;
+			align-self: auto;
 		}
-		#speak-text{
-			display: inline-block;
-			width: 80vw;
+
+		#speak-bar>*:nth-child(2) {
+			-webkit-order: 1;
+			-ms-flex-order: 1;
+			order: 1;
+			-webkit-flex: 0 1 auto;
+			-ms-flex: 0 1 auto;
+			flex: 0 1 auto;
+			-webkit-align-self: auto;
+			-ms-flex-item-align: auto;
+			align-self: auto;
+		}
+
+		#speak-bar>*:nth-child(3) {
+			-webkit-order: 2;
+			-ms-flex-order: 2;
+			order: 2;
+			-webkit-flex: 0 1 auto;
+			-ms-flex: 0 1 auto;
+			flex: 0 1 auto;
+			-webkit-align-self: auto;
+			-ms-flex-item-align: auto;
+			align-self: auto;
+		}
+		#speak-bar button{
 			pointer-events: all;
+			height: 100%;
 			font-size: 150%;
 		}
-		#statusbar form{
-			display: inline-block;
-		}
-		#statusbar button{
-			display: inline-block;
+		#speak-bar-text{
 			pointer-events: all;
-			width: 9vw;
-			height: 100%;
-			
+			width: 100%;
 			font-size: 150%;
 		}
 
@@ -86,14 +139,16 @@
 </head>
 
 <body>
-	<div id="stick"></div>
+	<div id="stickcam"></div><div id="stick"></div>
 	<div id="main">
 		<div id="statusbar">
-			<form onsubmit="return onSpeakSubmit()">
-				<input id="speak-text" type="text" autocomplete="off" value="Bonjour, humains"/>
-			</form>
-			<button onclick="document.getElementById('speak-text').value = '';">X</button>
-			<button onclick="onSpeakSubmit()">Say</button>
+			<div id="speak-bar">
+				<form onsubmit="return onSpeakSubmit()">
+					<input id="speak-bar-text" type="text" autocomplete="off" value="Bonjour, humains"/>
+				</form>
+				<button onclick="document.getElementById('speak-bar-text').value = '';">X</button>
+				<button onclick="onSpeakSubmit()">Say</button>
+			</div>
 			<div id="status" class="closed">
 				Not loaded... wait a bit
 			</div>
