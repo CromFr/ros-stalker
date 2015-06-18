@@ -5,7 +5,7 @@ var SOCKET_STREAM = 'ws://'+IP_TURTLEBOT+':8084/';
 var ACCEL_MAX_LIN = 3.0;
 var ACCEL_MAX_ANG = 10.0;
 var SPEED_MAX_LIN = 0.9;
-var SPEED_MAX_ANG = 3.0;
+var SPEED_MAX_ANG = 2.0;
 
 var ROS_POLL_PERIOD = 0.05;//period in seconds
 
@@ -20,6 +20,7 @@ var sender = null;
 var joystick = null;
 var stickradius = 0;
 var ros_velocity = null;
+var ros_speak = null;
 var velocity_lin = 0.0;
 var velocity_ang = 0.0;
 
@@ -84,6 +85,14 @@ function rosConnect(){
 		name : '/mobile_base/commands/velocity',
 		messageType : 'geometry_msgs/Twist'
 	});
+	
+
+	//Connect to a topic
+	ros_speak = new ROSLIB.Topic({
+		ros : ros,
+		name : '/speak_topic',
+		messageType : 'std_msgs/String'
+	});
 }
 
 
@@ -104,12 +113,25 @@ function rosUpdateVelocity(){
 	
 }
 
+function speak(text){
+	console.log("start");
+	var msg = new ROSLIB.Message({data: text});
+	ros_speak.publish(msg);
+	console.log("end");
+}
+
+function onSpeakSubmit(){
+	var text = document.getElementById('speak-text').value;
+	speak(text);
+	return false;
+}
+
 //===================================================================================
 // Joystick functions
 
 function joySetup(){
 	joyEnd();
-	stickradius = Math.min($(document).width(), $(document).height())/2.5;
+	stickradius = Math.min($(document).width(), $(document).height())/3;
 
 	if(joystick){
 		joystick.destroy();
@@ -179,6 +201,7 @@ function joyEnd(){
 	}, 1000*ROS_POLL_PERIOD);
 	
 };
+
 
 
 //===================================================================================

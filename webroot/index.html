@@ -59,6 +59,16 @@
 			width: 100vw;
 			max-height: 60vh;
 		}
+		#footer{
+			position: fixed;
+			bottom: 0;
+			width: 100vw;
+		}
+		#speak-text{
+			width: 100vw;
+			pointer-events: all;
+			font-size: 120%;
+		}
 
 	</style>
 </head>
@@ -74,6 +84,11 @@
 		<canvas id="stream">
 			Please use a browser that supports the Canvas Element
 		</canvas>
+		<div id="footer">
+			<form onsubmit="return onSpeakSubmit()">
+				<input id="speak-text" type="text" autocomplete="off" value="test"/>
+			</form>
+		</div>
 	</div>
 </body>
 </html>
