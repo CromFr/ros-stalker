@@ -65,9 +65,21 @@
 			width: 100vw;
 		}
 		#speak-text{
-			width: 100vw;
+			display: inline-block;
+			width: 80vw;
 			pointer-events: all;
-			font-size: 120%;
+			font-size: 150%;
+		}
+		#statusbar form{
+			display: inline-block;
+		}
+		#statusbar button{
+			display: inline-block;
+			pointer-events: all;
+			width: 9vw;
+			height: 100%;
+			
+			font-size: 150%;
 		}
 
 	</style>
@@ -77,6 +89,11 @@
 	<div id="stick"></div>
 	<div id="main">
 		<div id="statusbar">
+			<form onsubmit="return onSpeakSubmit()">
+				<input id="speak-text" type="text" autocomplete="off" value="Bonjour, humains"/>
+			</form>
+			<button onclick="document.getElementById('speak-text').value = '';">X</button>
+			<button onclick="onSpeakSubmit()">Say</button>
 			<div id="status" class="closed">
 				Not loaded... wait a bit
 			</div>
@@ -84,11 +101,6 @@
 		<canvas id="stream">
 			Please use a browser that supports the Canvas Element
 		</canvas>
-		<div id="footer">
-			<form onsubmit="return onSpeakSubmit()">
-				<input id="speak-text" type="text" autocomplete="off" value="test"/>
-			</form>
-		</div>
 	</div>
 </body>
 </html>
