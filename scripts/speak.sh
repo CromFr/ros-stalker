@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 echo $1 |
   for a in `cat`; do
     V=$(((($RANDOM) % 100) - 50))
