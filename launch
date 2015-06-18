@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if [ ! -s ../../devel/setup.sh ] ; then
+	echo "This package must be put in a catkin workspace"
+	echo "================================================"
+	echo "To create one:"
+	echo "WS_PATH=~/catkin_ws"
+	echo "mkdir -p $WS_PATH/src"
+	echo "catkin_init_workspace"
+	echo ""
+	echo "Then put this folder in $WS_PATH/src"
+	exit 255
+fi
+
+. ../../devel/setup.sh
+
+export DISPLAY=:0
+
+export PATH=$PWD:$PATH
+
+GTERM_OPT="--disable-factory --hide-menubar"
+
+gnome-terminal --geometry=70x10+0+0 $GTERM_OPT -e "roscore" &
+
+wget "http://localhost:11311/" -o /dev/null
+while [ $? -ne  8 ] ; do
+	echo "checking roscore activity"
+	sleep 1
+	wget "http://localhost:11311/" -o /dev/null
+done
+
+gnome-terminal --geometry=70x10+1000+0 $GTERM_OPT -e "roslaunch turtlebot_bringup minimal.launch" &
+gnome-terminal --geometry=70x10+0+200 $GTERM_OPT -e "roslaunch turtlebot_bringup 3dsensor.launch" &
+gnome-terminal --geometry=70x10+1000+200 $GTERM_OPT -e "roslaunch rosbridge_server rosbridge_websocket.launch" &
+
+gnome-terminal --geometry=70x10+0+400 $GTERM_OPT -e "rosrun stalker shell" &
+gnome-terminal --geometry=40x10+0+600 $GTERM_OPT -e 'sh -c "cd ~/jsmpeg && node stream-server.js BitchIAmFabulous"' &
+gnome-terminal --geometry=100x10+1000+600 $GTERM_OPT -e "ffmpeg -s 640x480 -f video4linux2 -i /dev/video0 -f mpeg1video -r 30 http://localhost:8082/BitchIAmFabulous/640/480/" &

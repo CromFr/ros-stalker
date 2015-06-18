@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ ! -s ../../devel/setup.sh ] ; then
+	echo "This package must be put in a catkin workspace"
+	echo "================================================"
+	echo "To create one:"
+	echo "WS_PATH=~/catkin_ws"
+	echo "mkdir -p $WS_PATH/src"
+	echo "catkin_init_workspace"
+	echo ""
+	echo "Then put this folder in $WS_PATH/src"
+	exit 255
+fi
+. ../../devel/setup.sh
+catkin_make -C ../../
+
