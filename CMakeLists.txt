@@ -23,6 +23,8 @@ target_link_libraries(shell ${catkin_LIBRARIES})
 add_executable(speak src/speak.cpp)
 target_link_libraries(speak ${catkin_LIBRARIES})
 
+add_executable(camctrl src/camctrl.cpp)
+target_link_libraries(camctrl ${catkin_LIBRARIES})
 
 
 #C++11
