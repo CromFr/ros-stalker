@@ -129,7 +129,6 @@ function rosUpdateVelocity(){
 }
 function rosUpdateCamPos(){
 	var msg = new ROSLIB.Message({data: cam_yaw+" "+cam_pitch});
-	console.log(msg);
 	ros_camctrl.publish(msg);
 }
 
@@ -149,25 +148,25 @@ function onSpeakSubmit(){
 
 function joyMoveSetup(){
 	joyMoveEnd();
-	joyMoveRadius = Math.min($(document).width(), $(document).height()/1.5)/3;
+	var container = document.getElementById('stick');
+	joyMoveRadius = Math.min(container.offsetWidth, container.offsetHeight)/2.5;
 
-	if(joyMove){
-		joyMove.destroy();
+	if(!joyMove){
+		
+		stick.style += "z-index: 1000;";//TODO
+		joyMove = new VirtualJoystick({
+			container: container,
+			mouseSupport: true,
+			limitStickTravel: true,
+			joyMoveRadius: joyMoveRadius,
+			strokeStyle: 'black'
+		});
+		joyMove._container.addEventListener('touchstart', joyMoveStart);
+		joyMove._container.addEventListener('mousedown', joyMoveStart);
+		joyMove._container.addEventListener('touchEnd', joyMoveEnd);
+		joyMove._container.addEventListener('mouseup', joyMoveEnd);
 	}
-	
-	stick.style += "z-index: 1000;";//TODO
-	joyMove = new VirtualJoystick({
-		container: document.getElementById('stick'),
-		mouseSupport: true,
-		limitStickTravel: true,
-		joyMoveRadius: joyMoveRadius,
-		strokeStyle: 'black'
-	});
-
-	joyMove._container.addEventListener('touchstart', joyMoveStart);
-	joyMove._container.addEventListener('mousedown', joyMoveStart);
-	joyMove._container.addEventListener('touchEnd', joyMoveEnd);
-	joyMove._container.addEventListener('mouseup', joyMoveEnd);
+	joyMove._stickRadius = joyMoveRadius;
 }
 
 function joyMoveStart(){
@@ -225,25 +224,26 @@ function joyMoveEnd(){
 
 function joyCamSetup(){
 	joyCamEnd();
-	joyCamRadius = Math.min($(document).width(), $(document).height()/2)/3;
+	var container = document.getElementById('stickcam');
+	joyCamRadius = Math.min(container.offsetWidth, container.offsetHeight)/2.5;
 
-	if(joyCam){
-		joyCam.destroy();
-	}
 	
-	stick.style += "z-index: 1000;";//TODO
-	joyCam = new VirtualJoystick({
-		container: document.getElementById('stickcam'),
-		mouseSupport: true,
-		limitStickTravel: true,
-		joyMoveRadius: joyCamRadius,
-		strokeStyle: 'blue'
-	});
+	if(!joyCam){
+		stick.style += "z-index: 1000;";//TODO
+		joyCam = new VirtualJoystick({
+			container: container,
+			mouseSupport: true,
+			limitStickTravel: true,
+			joyMoveRadius: joyCamRadius,
+			strokeStyle: 'blue'
+		});
 
-	joyCam._container.addEventListener('touchstart', joyCamStart);
-	joyCam._container.addEventListener('mousedown', joyCamStart);
-	joyCam._container.addEventListener('touchEnd', joyCamEnd);
-	joyCam._container.addEventListener('mouseup', joyCamEnd);
+		joyCam._container.addEventListener('touchstart', joyCamStart);
+		joyCam._container.addEventListener('mousedown', joyCamStart);
+		joyCam._container.addEventListener('touchEnd', joyCamEnd);
+		joyCam._container.addEventListener('mouseup', joyCamEnd);
+	}
+	joyCam._stickRadius = joyCamRadius;
 }
 
 function joyCamStart(){
