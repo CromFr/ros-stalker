@@ -1,6 +1,8 @@
+
+
+
 # Instructions
 _forgive me, those instructions are written in french_
-
 
 
 
@@ -15,7 +17,10 @@ cd stalker_ws/src/stalker
 ./launch
 ```
 
-## Résolution de problèmes
+# Ouverture de l'interface web
+![](res/qrcode_openiface.png)
+
+# Résolution de problèmes
 
 0. Si la connexion au Wifi bloque sur "Attribution de l'adresse IP", lancer `sudo service isc-dhcp-server start`
 0. Si la caméra n'est pas contrôlable
