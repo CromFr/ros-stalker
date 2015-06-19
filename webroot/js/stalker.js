@@ -8,10 +8,10 @@ var MOVE_SPEED_MAX_LIN = 0.9;
 var MOVE_SPEED_MAX_ANG = 2.0;
 
 var CAM_SPEED_YAW = 60;
-var CAM_SPEED_PITCH = 40;
+var CAM_SPEED_PITCH = 90;
 var CAM_POS_MIN_YAW = -170;
 var CAM_POS_MAX_YAW = 170;
-var CAM_POS_MIN_PITCH = -45;
+var CAM_POS_MIN_PITCH = -80;
 var CAM_POS_MAX_PITCH = 90;
 
 
@@ -57,14 +57,6 @@ $(document).ready(function() {
 window.addEventListener("resize", joyMoveSetup);
 window.addEventListener("resize", joyCamSetup);
 
-
-
-
-
-
-setInterval(function(){		
-	console.log("cam="+cam_yaw+":"+cam_pitch);
-}, 200);
 
 
 
@@ -136,22 +128,18 @@ function rosUpdateVelocity(){
 	ros_velocity.publish(twist);
 }
 function rosUpdateCamPos(){
-	var pos = new ROSLIB.Message({
-		yaw: cam_yaw ,
-		pitch: cam_pitch
-	});
-	ros_camctrl.publish(pos);
+	var msg = new ROSLIB.Message({data: cam_yaw+" "+cam_pitch});
+	console.log(msg);
+	ros_camctrl.publish(msg);
 }
 
 function speak(text){
-	console.log("start");
 	var msg = new ROSLIB.Message({data: text});
 	ros_speak.publish(msg);
-	console.log("end");
 }
 
 function onSpeakSubmit(){
-	var text = document.getElementById('speak-text').value;
+	var text = document.getElementById('speak-bar-text').value;
 	speak(text);
 	return false;
 }
@@ -161,7 +149,7 @@ function onSpeakSubmit(){
 
 function joyMoveSetup(){
 	joyMoveEnd();
-	joyMoveRadius = Math.min($(document).width(), $(document).height()/2)/3;
+	joyMoveRadius = Math.min($(document).width(), $(document).height()/1.5)/3;
 
 	if(joyMove){
 		joyMove.destroy();
