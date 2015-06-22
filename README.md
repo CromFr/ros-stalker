@@ -79,7 +79,7 @@ Port|Utilisation
 # Installation des logiciels sur le turtlebot (déja fait)
 
 ### ROS
-Voir le [wiki de ROS](http://wiki.ros.org/Robots/TurtleBot) pour les instructions pour installer et configurer ROS
+Voir le [wiki de ROS](http://wiki.ros.org/Robots/TurtleBot) pour les instructions pour installer et configurer ROS Hydro
 ```bash
 # Installation de rosbridge, pour le requêtage en javascript
 sudo apt-get install ros-hydro-rosbridge-suite
@@ -88,6 +88,22 @@ sudo apt-get install ros-hydro-rosbridge-suite
 ### Streaming video
 - Installer [jsmpeg](https://github.com/phoboslab/jsmpeg) dans le home de l'utilisateur
 - Installer ffmpeg, node
+
+### Server web
+- Installer le paquet `nginx`
+- Exemple de configuration:
+  ```nginx
+  http {
+      server {
+          listen       80;
+          server_name  localhost;
+  
+          location / {
+              root   /home/turtle/stalker_ws/src/stalker/webroot;
+          }
+      }
+  }
+  ```
 
 ### Arduino
 Le programme d'arduino est [`res/arduino_serial.ino`](res/arduino_serial.ino)
