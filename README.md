@@ -61,9 +61,12 @@ rosrun stalker camctrl /dev/ttyACM?
 ```
 
 # Réseau Wifi
-- Adresse de la borne: `192.168.0.254`
-- Utilisateur: `administrateur`
-- Mot de passe: même que celui par défaut des comptes isen
+### Administration
+Nom|Valeur
+---|---
+Adresse de la borne |`192.168.0.254`
+Utilisateur|`administrateur`
+Mot de passe|même que celui par défaut des comptes isen
 
 ### Ports
 Port|Utilisation
